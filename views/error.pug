@@ -1,0 +1,10 @@
+extends layout
+
+block content
+  h1= title
+  p.error(role='alert')= message
+  if uncertainCreate
+    p If you were creating a plant, check the homepage before submitting again. HubSpot may have saved the record even if its response did not arrive.
+  a(href='/') Return to the homepage
+  p
+    a(href='/update-cobj') Open a new form

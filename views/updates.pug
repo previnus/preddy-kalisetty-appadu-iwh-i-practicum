@@ -1,0 +1,22 @@
+extends layout
+
+block content
+  a.back(href='/') Return to the homepage
+  p.eyebrow PLANT COLLECTION
+  h1 Add a plant
+  p Fill in all three properties to create a new HubSpot record. Each Name must be unique.
+  if errors.length
+    .error(role='alert')
+      h2 Please check the form
+      ul
+        each message in errors
+          li= message
+  form.card(method='post' action='/update-cobj')
+    input(type='hidden' name='csrf_token' value=formToken)
+    label(for='name') Name
+    input#name(type='text' name='name' value=values.name required maxlength='120' autocomplete='off')
+    label(for='species') Species
+    input#species(type='text' name='species' value=values.species required maxlength='120' autocomplete='off')
+    label(for='care_notes') Care Notes
+    textarea#care_notes(name='care_notes' required maxlength='1000' rows='5')= values.care_notes
+    button.button(type='submit') Create plant
