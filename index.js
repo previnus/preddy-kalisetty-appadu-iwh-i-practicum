@@ -1,71 +1,113 @@
+const path = require('node:path');
+const { randomBytes, timingSafeEqual } = require('node:crypto');
 const express = require('express');
-const axios = require('axios');
-const app = express();
+const { loadConfig } = require('./lib/config');
+const { createClient, createPlantStore, verifyAccount, safeErrorMessage } = require('./lib/hubspot');
+const { validatePlant } = require('./lib/plants');
 
-app.set('view engine', 'pug');
-app.use(express.static(__dirname + '/public'));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-
-// * Please DO NOT INCLUDE the private app access token in your repo. Don't do this practicum in your normal account.
-const PRIVATE_APP_ACCESS = '';
-
-// TODO: ROUTE 1 - Create a new app.get route for the homepage to call your custom object data. Pass this data along to the front-end and create a new pug template in the views folder.
-
-// * Code for Route 1 goes here
-
-// TODO: ROUTE 2 - Create a new app.get route for the form to create or update new custom object data. Send this data along in the next route.
-
-// * Code for Route 2 goes here
-
-// TODO: ROUTE 3 - Create a new app.post route for the custom objects form to create or update your custom object data. Once executed, redirect the user to the homepage.
-
-// * Code for Route 3 goes here
-
-/** 
-* * This is sample code to give you a reference for how you should structure your calls. 
-
-* * App.get sample
-app.get('/contacts', async (req, res) => {
-    const contacts = 'https://api.hubspot.com/crm/v3/objects/contacts';
-    const headers = {
-        Authorization: `Bearer ${PRIVATE_APP_ACCESS}`,
-        'Content-Type': 'application/json'
-    }
-    try {
-        const resp = await axios.get(contacts, { headers });
-        const data = resp.data.results;
-        res.render('contacts', { title: 'Contacts | HubSpot APIs', data });      
-    } catch (error) {
-        console.error(error);
-    }
-});
-
-* * App.post sample
-app.post('/update', async (req, res) => {
-    const update = {
-        properties: {
-            "favorite_book": req.body.newVal
+function createApp({ store, logger = console } = {}) {
+    if (!store) throw new Error('A plant store is required.');
+    const app = express();
+    const formToken = randomBytes(32).toString('hex');
+    app.disable('x-powered-by');
+    app.set('view engine', 'pug');
+    app.set('views', path.join(__dirname, 'views'));
+    app.use((req, res, next) => {
+        res.set({
+            'Content-Security-Policy': "default-src 'none'; style-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+            'X-Content-Type-Options': 'nosniff',
+            'Referrer-Policy': 'no-referrer',
+            'Cache-Control': 'no-store'
+        });
+        // Loopback binding plus Host validation closes the DNS-rebinding path.
+        if (!/^(localhost|127\.0\.0\.1)(:\d{1,5})?$/.test(req.get('host') || '')) {
+            return res.status(403).send('Open this app through localhost or 127.0.0.1.');
         }
-    }
+        next();
+    });
+    app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'deny' }));
+    app.use(express.urlencoded({ extended: false, limit: '8kb', parameterLimit: 4 }));
 
-    const email = req.query.email;
-    const updateContact = `https://api.hubapi.com/crm/v3/objects/contacts/${email}?idProperty=email`;
-    const headers = {
-        Authorization: `Bearer ${PRIVATE_APP_ACCESS}`,
-        'Content-Type': 'application/json'
-    };
+    // Route 1: request every custom property and render the HubSpot records.
+    app.get('/', async (req, res, next) => {
+        try {
+            const data = await store.list();
+            res.render('homepage', {
+                title: 'Plants | Integrating With HubSpot I Practicum',
+                data, created: req.query.created === '1'
+            });
+        } catch (error) { next(error); }
+    });
 
-    try { 
-        await axios.patch(updateContact, update, { headers } );
-        res.redirect('back');
-    } catch(err) {
-        console.error(err);
-    }
+    // Route 2: render the required creation form.
+    app.get('/update-cobj', (req, res) => {
+        res.render('updates', {
+            title: 'Update Custom Object Form | Integrating With HubSpot I Practicum',
+            values: {}, errors: [], formToken
+        });
+    });
 
-});
-*/
+    // Route 3: create one CRM record, then redirect to the homepage.
+    app.post('/update-cobj', async (req, res, next) => {
+        const submittedToken = req.body?.csrf_token;
+        if (typeof submittedToken !== 'string' || !/^[a-f0-9]{64}$/.test(submittedToken) ||
+            !timingSafeEqual(Buffer.from(submittedToken), Buffer.from(formToken)) ||
+            req.get('sec-fetch-site') === 'cross-site') {
+            return res.status(403).render('error', {
+                title: 'Form expired', message: 'Open the form again from this app before submitting.'
+            });
+        }
+        const { values, errors } = validatePlant(req.body);
+        if (errors.length) {
+            return res.status(422).render('updates', {
+                title: 'Update Custom Object Form | Integrating With HubSpot I Practicum',
+                values, errors, formToken
+            });
+        }
+        try {
+            await store.create(values);
+            res.redirect(303, '/?created=1');
+        } catch (error) { next(error); }
+    });
 
+    app.use((req, res) => res.status(404).render('error', {
+        title: 'Page not found', message: 'That page does not exist. Return to your plants below.'
+    }));
+    app.use((error, req, res, next) => {
+        if (res.headersSent) return next(error);
+        const bodyError = ['entity.too.large', 'parameters.too.many'].includes(error.type);
+        const parseError = ['entity.parse.failed', 'charset.unsupported', 'encoding.unsupported'].includes(error.type);
+        // Axios errors include request headers. Log only safe status categories.
+        const status = bodyError ? 413 : parseError ? 400 : 502;
+        logger.error(`Request failed (HTTP ${status}; upstream ${Number(error.response?.status) || 'unavailable'}).`);
+        res.status(status).render('error', {
+            title: 'Unable to complete request',
+            message: bodyError ? 'The submitted form is too large.' :
+                parseError ? 'Submit the form using its original text fields.' : safeErrorMessage(error),
+            uncertainCreate: req.method === 'POST' && !bodyError && !parseError
+        });
+    });
+    return app;
+}
 
-// * Localhost
-app.listen(3000, () => console.log('Listening on http://localhost:3000'));
+if (require.main === module) {
+    (async () => {
+        const config = loadConfig();
+        const client = createClient(config.token);
+        await verifyAccount(client, config);
+        const store = createPlantStore(client, config.objectType);
+        const app = createApp({ store });
+        const server = app.listen(config.port, '127.0.0.1', () => {
+            console.log(`Listening on http://localhost:${config.port}`);
+        });
+        server.on('error', () => {
+            console.error('Unable to start the local server. Check that PORT is available.');
+            process.exitCode = 1;
+        });
+    })().catch(error => {
+        console.error(error.isAxiosError ? safeErrorMessage(error) : error.message);
+        process.exitCode = 1;
+    });
+}
+
+module.exports = { createApp };

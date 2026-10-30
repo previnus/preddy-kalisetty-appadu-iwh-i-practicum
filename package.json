@@ -1,16 +1,21 @@
 {
     "name": "integrating-with-hubspot-i-foundations-practicum",
     "version": "1.0.0",
-    "description": "",
+    "description": "Local Plants CRM app for the HubSpot Foundations practicum",
     "main": "index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "start": "node index.js",
+        "test": "node --test",
+        "setup:hubspot": "node scripts/setup-hubspot.js",
+        "verify:hubspot": "node scripts/verify-hubspot.js"
     },
-    "author": "HubSpot Academy learner",
+    "author": "Preddy Kalisetty Appadu",
     "license": "ISC",
+    "engines": { "node": ">=22" },
     "dependencies": {
-        "axios": "^1.3.5",
-        "express": "^4.18.2",
-        "pug": "^3.0.2"
+        "axios": "1.21.0",
+        "dotenv": "18.0.9",
+        "express": "4.22.3",
+        "pug": "3.0.4"
     }
 }

@@ -1,0 +1,31 @@
+extends layout
+
+block content
+  .page-heading
+    div
+      p.eyebrow PLANT COLLECTION
+      h1 Your plants
+      p Keep names, species and care notes together.
+    a.button(href='/update-cobj') Add to this table
+  if created
+    p.notice(role='status') Plant created in HubSpot.
+  if data.length
+    .table-wrap
+      table
+        caption #{data.length} plant record#{data.length === 1 ? '' : 's'} from HubSpot
+        thead
+          tr
+            th(scope='col') Name
+            th(scope='col') Species
+            th(scope='col') Care Notes
+        tbody
+          each plant in data
+            tr
+              th(scope='row')= plant.properties.name || '—'
+              td= plant.properties.species || '—'
+              td.notes= plant.properties.care_notes || '—'
+  else
+    .empty
+      h2 Your collection starts here
+      p Add a plant using the form. It will be saved in HubSpot and appear in this table.
+      a(href='/update-cobj') Add your first plant
