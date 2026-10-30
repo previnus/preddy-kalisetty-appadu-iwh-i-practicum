@@ -50,9 +50,22 @@ documented local-only scope. This is distinct from an automated scan pass.
   confirms rejection. The whole HTTP Host header is also bounded by Node.
 
 These rule/path pairs are documented in `.rafter.yml` with evidence-based
-suppression reasons. Other rules and files remain enabled. A follow-up remote
-scan is required to confirm suppression and the current branch state.
+suppression reasons. Other rules and files remain enabled. Follow-up scan
+`199d674d-7565-49e7-b995-eed61e77caaf` completed without partial results: the regex
+warning was suppressed, but both reviewed Pug false positives remained. The
+configuration now includes the normalized rule ID and display title as aliases
+for the same rule; no unrelated finding category was excluded.
 
-The merge remains pending live HubSpot setup, verification, the actual README
-list-view URL and the remote review result. Mock tests do not prove live API
-access, record creation or Academy acceptance.
+## Live validation
+
+On 2026-10-30, the configured token's account matched developer test account
+`149667647`. Setup created Plants (`2-255799934`), three populated sample records
+and a synthetic test contact, with all three plant-to-contact associations.
+`npm run verify:hubspot` passed. A browser submission created **Practicum Aloe**,
+redirected to the homepage, and persisted after reload. The read-only live check
+then confirmed four records. The README contains the actual test-account list
+view. The token remained only in the ignored local `.env` file.
+
+All 13 automated tests passed after live setup. Final merge remains pending the
+current remote scan result. Passing these checks does not promise Academy
+acceptance; the learner must review the AI-assisted code and submit the repo.

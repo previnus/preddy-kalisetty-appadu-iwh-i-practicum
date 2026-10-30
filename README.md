@@ -7,9 +7,7 @@ This fork belongs to [previnus](https://github.com/previnus/preddy-kalisetty-app
 ## Developer test-account list view
 
 <!-- test-account-list-view:start -->
-**Pending:** the learner must configure the developer test account and private app.
-The setup command replaces this note with the real Plants list-view link after
-successful HubSpot setup. No account or object ID has been invented.
+[Plants in the developer test account](https://app.hubspot.com/contacts/149667647/objects/2-255799934/views/all/list)
 <!-- test-account-list-view:end -->
 
 ## What the app does
@@ -124,6 +122,13 @@ Check `git check-ignore .env` before staging. Use explicit file paths when
 committing. Rotate a token in HubSpot immediately if it is exposed.
 
 ## Git history and final submission
+
+Live verification completed on 2026-10-30 against developer test account
+`149667647`, Plants object `2-255799934`. The three seeded plants have all three
+custom properties and contact associations. A fourth record, **Practicum Aloe**,
+was created through the browser form, appeared after the redirect and persisted
+after reload. `npm run verify:hubspot` confirmed four live records; all 13 local
+automated tests passed. No access token is included in this repository.
 
 Development takes place on `working-branch`, created from this fork's `main`.
 Commits reflect actual implementation steps; no backdating or fabricated edits.
