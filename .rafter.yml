@@ -1,0 +1,9 @@
+# Findings reviewed against escaped Pug output and the HTTP security tests.
+ignore:
+  - paths: ["index.js"]
+    rules:
+      - "rules.rafter.javascript.express.xss-taint.rafter.javascript.express.xss-taint.xss-template-taint"
+    reason: "Reviewed render sites at index.js:35 and :62: created is a boolean, field values are bounded strings, and every dynamic Pug value/attribute is escaped. No !{}, != or raw HTML sink exists. Stored/reflected script tests in test/app.test.js pass. Reassess if template escaping changes."
+  - paths: ["index.js"]
+    rules: ["security/detect-unsafe-regex"]
+    reason: "Host regex at index.js:23 has literal alternatives, no nested unbounded quantifiers, and only a bounded optional 1-to-5-digit port. Anchoring and disjoint alternatives prevent catastrophic backtracking. Forged Host HTTP test passes."

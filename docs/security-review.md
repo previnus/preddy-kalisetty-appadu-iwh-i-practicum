@@ -33,7 +33,25 @@ documented local-only scope. This is distinct from an automated scan pass.
 - `rafter secrets .`: no secrets detected.
 - `npm audit --omit=dev`: zero known dependency vulnerabilities.
 - Remote `rafter run`, fast mode, on the public fork's `working-branch`:
-  scan ID `743f0ba5-efe1-4756-b629-afa81e958391`; result pending at submission.
+  scan ID `743f0ba5-efe1-4756-b629-afa81e958391`; completed, not partial.
+  It reported two template-taint errors and one regex warning, reviewed below.
+
+## Remote finding triage
+
+- Template taint at `index.js:35`: the request-derived `created` local is a
+  boolean comparison, not raw HTML; CRM strings reach only escaped cells in
+  `views/homepage.pug:24`. False positive. The script-in-CRM test confirms escaping.
+- Template taint at `index.js:62`: validated form strings reach escaped Pug
+  attributes and textarea output in `views/updates.pug:17`–21. No unescaped
+  interpolation exists. False positive; reflected script-input test passes.
+- Unsafe regex at `index.js:23`: literal, disjoint host alternatives and one
+  optional port bounded to five digits. There are no nested unbounded repeats
+  or exponentially ambiguous paths. False positive; forged Host request test
+  confirms rejection. The whole HTTP Host header is also bounded by Node.
+
+These rule/path pairs are documented in `.rafter.yml` with evidence-based
+suppression reasons. Other rules and files remain enabled. A follow-up remote
+scan is required to confirm suppression and the current branch state.
 
 The merge remains pending live HubSpot setup, verification, the actual README
 list-view URL and the remote review result. Mock tests do not prove live API
