@@ -66,6 +66,22 @@ redirected to the homepage, and persisted after reload. The read-only live check
 then confirmed four records. The README contains the actual test-account list
 view. The token remained only in the ignored local `.env` file.
 
-All 13 automated tests passed after live setup. Final merge remains pending the
-current remote scan result. Passing these checks does not promise Academy
-acceptance; the learner must review the AI-assisted code and submit the repo.
+All 13 automated tests passed after live setup. The local secrets scan was also
+rerun after token configuration: no secrets detected; only `.env.example` is
+tracked, and `.env` has no Git history.
+
+## Final remote result
+
+Scan `4511351d-ef14-4ddd-836a-47688ae46b2f` completed (not partial) on
+2026-10-30 against `working-branch`, whose verified remote head was
+`aa2fdfb0e0b73a5f45de9ff0008ff91f266948af`. Result: **0 errors, 0 warnings,
+0 notes, no vulnerabilities returned**, with the reviewed false-positive
+exclusions above. The service returned `scanned_commit: null`; it did not supply
+an immutable commit attestation. The branch was not changed while this scan ran.
+Only this documentation and the README completion status were updated afterward;
+application code and scan configuration were unchanged.
+
+Manual review, remote Rafter review, local secrets checks, automated tests and
+live HubSpot/browser checks are complete. Passing these checks does not promise
+Academy acceptance; the learner must review the AI-assisted code and submit the
+public repository.

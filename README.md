@@ -129,15 +129,18 @@ custom properties and contact associations. A fourth record, **Practicum Aloe**,
 was created through the browser form, appeared after the redirect and persisted
 after reload. `npm run verify:hubspot` confirmed four live records; all 13 local
 automated tests passed. No access token is included in this repository.
+The final remote Rafter scan completed with zero errors and warnings after
+documented false-positive review; see [security review](docs/security-review.md).
 
 Development takes place on `working-branch`, created from this fork's `main`.
 Commits reflect actual implementation steps; no backdating or fabricated edits.
 Review the AI-assisted implementation and understand the code before submission.
 The Academy requires the learner's own work and reviews revision history.
 
-Before submitting, finish live verification, confirm the real list-view link
-above, complete the required Rafter review and merge `working-branch` into `main`.
-Submit the public repository URL, not localhost or a preview:
+Live verification, the real list-view link and Rafter review are complete. The
+completed working branch is merged into `main` as the final Git step; confirm
+the merge in the repository history before submitting. Submit the public
+repository URL, not localhost or a preview:
 
 https://github.com/previnus/preddy-kalisetty-appadu-iwh-i-practicum
 
