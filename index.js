@@ -2,7 +2,7 @@ const path = require('node:path');
 const { randomBytes, timingSafeEqual } = require('node:crypto');
 const express = require('express');
 const { loadConfig } = require('./lib/config');
-const { createClient, createPlantStore, safeErrorMessage } = require('./lib/hubspot');
+const { createClient, createPlantStore, verifyAccount, safeErrorMessage } = require('./lib/hubspot');
 const { validatePlant } = require('./lib/plants');
 
 function createApp({ store, logger = console } = {}) {
@@ -91,9 +91,11 @@ function createApp({ store, logger = console } = {}) {
 }
 
 if (require.main === module) {
-    try {
+    (async () => {
         const config = loadConfig();
-        const store = createPlantStore(createClient(config.token), config.objectType);
+        const client = createClient(config.token);
+        await verifyAccount(client, config);
+        const store = createPlantStore(client, config.objectType);
         const app = createApp({ store });
         const server = app.listen(config.port, '127.0.0.1', () => {
             console.log(`Listening on http://localhost:${config.port}`);
@@ -102,10 +104,10 @@ if (require.main === module) {
             console.error('Unable to start the local server. Check that PORT is available.');
             process.exitCode = 1;
         });
-    } catch (error) {
-        console.error(error.message);
+    })().catch(error => {
+        console.error(error.isAxiosError ? safeErrorMessage(error) : error.message);
         process.exitCode = 1;
-    }
+    });
 }
 
 module.exports = { createApp };
